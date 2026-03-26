@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduVerse Kids – 2º ao 5º Ano</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --math-a:   #f72585; --math-b:   #b5179e;
+  --port-a:   #3a86ff; --port-b:   #023e8a;
+  --sci-a:    #06d6a0; --sci-b:    #007f5f;
+  --hist-a:   #ff9f1c; --hist-b:   #b5451b;
+  --geo-a:    #7cb518; --geo-b:    #3a5a40;
+  --gold:     #ffd60a;
+  --ui-bg:    rgba(5,5,20,.72);
+  --panel-bg: rgba(10,8,30,.82);
+  --radius:   20px;
+  --accent: #ffd60a;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:#060614;
+  overflow:hidden;
+  width:100vw;height:100vh;
+  user-select:none;
+}
+
+canvas{display:block;position:fixed;top:0;left:0;z-index:0;}
+
+/* ─── SCREENS ─── */
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  z-index:10;
+  transition:opacity .5s,transform .5s;
+  pointer-events:auto;
+}
+.screen.hidden{opacity:0;pointer-events:none;transform:scale(.97);}
+
+/* ─── PARTICLES BG CANVAS ─── */
+#fx-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+/* ══════════════════════════════
+   MENU SCREEN
+══════════════════════════════ */
+#menu-screen{gap:24px;padding:20px;}
+
+.logo-wrap{text-align:center;}
+.logo-wrap h1{
+  font-family:'Baloo 2',cursive;
+  font-size:clamp(2.4rem,7vw,5rem);
+  background:linear-gradient(135deg,#ffd60a,#ff6b6b,#c77dff,#48cae4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 24px rgba(255,214,10,.5));
+  line-height:1;
+}
+.logo-wrap .sub{
+  color:#c8d3f5;font-weight:700;
+  font-size:clamp(.85rem,2vw,1.15rem);
+  margin-top:6px;
+  text-shadow:0 2px 8px #000;
+}
+
+.subjects-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:14px;
+  max-width:860px;width:90vw;
+}
+
+.subj-card{
+  background:rgba(255,255,255,.07);
+  backdrop-filter:blur(16px);
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:var(--radius);
+  padding:20px 12px 16px;
+  text-align:center;cursor:pointer;
+  transition:transform .22s,box-shadow .22s,border-color .22s;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:relative;overflow:hidden;
+}
+.subj-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--card-grad);opacity:0;
+  transition:opacity .3s;border-radius:var(--radius);
+}
+.subj-card:hover::before{opacity:1;}
+.subj-card:hover{
+  transform:translateY(-10px) scale(1.05);
+  box-shadow:0 24px 56px rgba(0,0,0,.5);
+  border-color:var(--card-accent);
+}
+.subj-card .c-icon{font-size:3rem;position:relative;z-index:1;}
+.subj-card .c-name{
+  font-family:'Baloo 2',cursive;font-size:1.1rem;color:#fff;
+  text-shadow:0 2px 4px #000;font-weight:700;position:relative;z-index:1;
+}
+.subj-card .c-year{
+  font-size:.75rem;color:#d0d8ff;
+  background:rgba(0,0,0,.35);border-radius:20px;
+  padding:2px 10px;position:relative;z-index:1;
+}
+
+/* ══════════════════════════════
+   GAME SCREEN
+══════════════════════════════ */
+#game-screen{justify-content:flex-start;pointer-events:none;}
+
+/* TOP BAR */
+#top-bar{
+  margin-top:14px;
+  background:var(--ui-bg);
+  backdrop-filter:blur(14px);
+  border-radius:40px;
+  padding:10px 22px;
+  display:flex;align-items:center;gap:14px;
+  border:1px solid rgba(255,255,255,.15);
+  pointer-events:auto;
+  box-shadow:0 4px 24px rgba(0,0,0,.4);
+  flex-wrap:wrap;justify-content:center;
+}
+#subj-label{
+  font-family:'Baloo 2',cursive;color:#fff;
+  font-size:1.15rem;letter-spacing:.5px;
+}
+#progress-wrap{display:flex;align-items:center;gap:8px;}
+#progress-bar-outer{
+  width:100px;height:8px;background:rgba(255,255,255,.15);
+  border-radius:8px;overflow:hidden;
+}
+#progress-bar-fill{
+  height:100%;background:var(--gold);border-radius:8px;
+  transition:width .5s ease;width:0%;
+}
+#q-counter{color:#c8d3f5;font-size:.85rem;font-weight:700;}
+#score-display{
+  background:rgba(255,214,10,.18);border-radius:20px;
+  padding:4px 14px;color:var(--gold);font-weight:900;font-size:1rem;
+  border:1px solid rgba(255,214,10,.3);
+}
+#btn-home{
+  background:none;border:none;color:#fff;font-size:1.4rem;
+  cursor:pointer;transition:transform .2s;pointer-events:auto;
+}
+#btn-home:hover{transform:scale(1.3) rotate(-15deg);}
+
+/* QUIZ PANEL */
+#quiz-panel{
+  position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%);
+  background:var(--panel-bg);
+  backdrop-filter:blur(18px);
+  border:1.5px solid rgba(255,255,255,.18);
+  border-radius:var(--radius);
+  padding:22px 24px 20px;
+  width:min(580px,93vw);
+  pointer-events:auto;
+  transition:opacity .4s,transform .4s;
+  box-shadow:0 8px 48px rgba(0,0,0,.6);
+}
+#quiz-panel.hidden{opacity:0;transform:translateX(-50%) translateY(40px);pointer-events:none;}
+
+#q-badge{
+  display:inline-block;
+  font-size:.7rem;font-weight:900;letter-spacing:1px;
+  text-transform:uppercase;padding:3px 12px;border-radius:20px;
+  margin-bottom:10px;color:#fff;
+  background:var(--badge-color,#555);
+}
+#question-text{
+  color:#fff;font-weight:800;
+  font-size:clamp(.95rem,2.4vw,1.2rem);
+  margin-bottom:14px;line-height:1.45;
+}
+
+/* Tip / dica visual */
+#q-tip{
+  color:#b0b8d8;font-size:.82rem;font-weight:600;
+  margin-bottom:10px;font-style:italic;
+  min-height:18px;
+}
+
+.choices{
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;
+}
+.choice-btn{
+  background:rgba(255,255,255,.09);
+  border:2px solid rgba(255,255,255,.18);
+  border-radius:14px;
+  color:#fff;font-family:'Nunito',sans-serif;
+  font-weight:800;font-size:.92rem;
+  padding:13px 10px;cursor:pointer;
+  transition:background .18s,border-color .18s,transform .14s;
+  text-align:center;line-height:1.3;
+  position:relative;overflow:hidden;
+}
+.choice-btn:hover:not(:disabled){
+  background:rgba(255,214,10,.2);
+  border-color:var(--gold);
+  transform:scale(1.04);
+}
+.choice-btn.correct{
+  background:rgba(6,214,160,.28)!important;
+  border-color:#06d6a0!important;
+  animation:pulse-ok .4s ease;
+}
+.choice-btn.wrong{
+  background:rgba(255,60,60,.28)!important;
+  border-color:#ff3c3c!important;
+  animation:shake .3s ease;
+}
+@keyframes pulse-ok{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+#feedback-row{
+  display:flex;align-items:center;gap:10px;
+  margin-top:12px;min-height:26px;
+}
+#feedback-icon{font-size:1.4rem;}
+#feedback-text{font-size:.95rem;font-weight:700;flex:1;}
+.fb-ok{color:#06d6a0;}
+.fb-err{color:#ff7070;}
+
+#btn-next{
+  display:block;margin:12px auto 0;
+  background:linear-gradient(135deg,var(--gold),#ff9f1c);
+  border:none;border-radius:30px;
+  color:#000;font-family:'Baloo 2',cursive;
+  font-size:1.05rem;font-weight:700;
+  padding:10px 38px;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 4px 18px rgba(255,214,10,.4);
+}
+#btn-next:hover{transform:scale(1.06);box-shadow:0 8px 28px rgba(255,214,10,.6);}
+#btn-next.hidden{display:none;}
+
+/* ══════════════════════════════
+   RESULT SCREEN
+══════════════════════════════ */
+#result-screen{gap:18px;text-align:center;padding:20px;}
+
+.trophy-wrap{font-size:5rem;animation:bounce 1s ease infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-14px)}}
+
+#result-screen h2{
+  font-family:'Baloo 2',cursive;color:#fff;
+  font-size:clamp(1.8rem,6vw,3.6rem);
+  text-shadow:0 0 28px var(--gold);
+}
+#result-stars{font-size:2rem;letter-spacing:4px;}
+#result-score{
+  font-size:clamp(1.1rem,3.5vw,1.7rem);color:var(--gold);
+  font-weight:900;
+}
+#result-msg{
+  color:#c8d3f5;font-size:1rem;max-width:400px;line-height:1.5;
+}
+
+.result-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px;}
+.big-btn{
+  background:linear-gradient(135deg,var(--gold),#ff9f1c);
+  border:none;border-radius:40px;
+  color:#000;font-family:'Baloo 2',cursive;
+  font-size:1.1rem;font-weight:700;
+  padding:13px 40px;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 6px 24px rgba(255,214,10,.45);
+}
+.big-btn:hover{transform:scale(1.07);}
+.big-btn.ghost{
+  background:rgba(255,255,255,.1);color:#fff;
+  box-shadow:none;border:1.5px solid rgba(255,255,255,.25);
+}
+
+/* ─── LOADING ─── */
+#loading{
+  position:fixed;inset:0;background:#060614;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:18px;z-index:200;
+  transition:opacity .7s;
+}
+#loading .l-title{
+  font-family:'Baloo 2',cursive;
+  font-size:2.4rem;color:#fff;
+  text-shadow:0 0 20px var(--gold);
+}
+#loading .l-sub{color:#8892b0;font-size:1rem;}
+.loader-bar{width:240px;height:10px;background:#1a1a2e;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1);}
+.loader-fill{height:100%;background:linear-gradient(90deg,var(--gold),#ff6b6b);border-radius:10px;animation:loadup 1.8s ease forwards;}
+@keyframes loadup{from{width:0}to{width:100%}}
+
+/* ─── CONFETTI ─── */
+#conf-canvas{position:fixed;inset:0;z-index:50;pointer-events:none;}
+
+/* ─── MOBILE ─── */
+@media(max-width:520px){
+  .subjects-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .choices{grid-template-columns:1fr;}
+  #top-bar{gap:8px;padding:8px 14px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="c3d"></canvas>
+<canvas id="fx-canvas"></canvas>
+<canvas id="conf-canvas"></canvas>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="l-title">🎒 EduVerse Kids</div>
+  <div class="l-sub">Preparando as aventuras de aprendizado…</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<!-- ══ MENU ══ -->
+<div class="screen" id="menu-screen">
+  <div class="logo-wrap">
+    <h1>🎒 EduVerse Kids</h1>
+    <p class="sub">2º ao 5º Ano • 7 a 11 anos • Aprenda Brincando!</p>
+  </div>
+  <div class="subjects-grid" id="subjects-grid"></div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div class="screen hidden" id="game-screen">
+  <div id="top-bar">
+    <span id="subj-label">📐 Matemática</span>
+    <div id="progress-wrap">
+      <div id="progress-bar-outer"><div id="progress-bar-fill"></div></div>
+      <span id="q-counter">1/10</span>
+    </div>
+    <span id="score-display">⭐ 0 pts</span>
+    <button id="btn-home" title="Voltar ao menu">🏠</button>
+  </div>
+
+  <div id="quiz-panel">
+    <div id="q-badge">Matemática</div>
+    <div id="q-tip"></div>
+    <div id="question-text"></div>
+    <div class="choices" id="choices"></div>
+    <div id="feedback-row">
+      <span id="feedback-icon"></span>
+      <span id="feedback-text"></span>
+    </div>
+    <button id="btn-next" class="hidden">Próxima pergunta →</button>
+  </div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div class="screen hidden" id="result-screen">
+  <div class="trophy-wrap" id="trophy-emoji">🏆</div>
+  <h2 id="result-title">Parabéns!</h2>
+  <div id="result-stars"></div>
+  <div id="result-score">Você fez 0 pontos!</div>
+  <div id="result-msg"></div>
+  <div class="result-btns">
+    <button class="big-btn" id="btn-replay">🔄 Jogar de Novo</button>
+    <button class="big-btn ghost" id="btn-menu">🏠 Escolher Matéria</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════
+//  CONTENT DATABASE
+// ══════════════════════════════════════════════════
+const SUBJECTS = [
+  {
+    id:'math', icon:'📐', name:'Matemática',
+    badge:'📐 Matemática', badgeColor:'#b5179e',
+    cardGrad:'linear-gradient(135deg,rgba(247,37,133,.35),rgba(76,0,130,.3))',
+    cardAccent:'#f72585',
+    fogColor:0x1a0033, bgColor:0x0d0020,
+    lightColor:0xf72585, particleColor:0xf72585,
+    years:'2º ao 5º ano',
+    questions:[
+      /* 2º ano */
+      {q:'Quanto é 12 + 8?', tip:'💡 Tente contar nos dedos!', choices:['18','20','22','24'], ans:1},
+      {q:'Pedro tem 15 balas e come 6. Quantas sobram?', tip:'💡 Subtraia!', choices:['7','8','9','10'], ans:2},
+      {q:'Qual é o dobro de 7?', tip:'💡 7 + 7 = ?', choices:['12','13','14','15'], ans:2},
+      {q:'Quantos lados tem um triângulo?', tip:'💡 Pense na forma!', choices:['2','3','4','5'], ans:1},
+      /* 3º ano */
+      {q:'Quanto é 24 × 3?', tip:'💡 Some 24 três vezes.', choices:['62','68','72','76'], ans:2},
+      {q:'Qual fração representa metade?', tip:'💡 Meio = 1 parte de 2.', choices:['1/3','2/4','1/2','3/6'], ans:2},
+      {q:'48 ÷ 6 = ?', tip:'💡 Quantas vezes 6 cabe em 48?', choices:['6','7','8','9'], ans:2},
+      {q:'Uma pizza tem 8 fatias. Ana comeu 3/8. Quantas fatias ela comeu?', tip:'💡 3/8 de 8.', choices:['2','3','4','5'], ans:1},
+      /* 4º ano */
+      {q:'Quanto é 256 + 384?', tip:'💡 Some centenas, dezenas e unidades.', choices:['620','630','640','650'], ans:2},
+      {q:'Qual é o maior número primo menor que 20?', tip:'💡 Número primo = divisível só por 1 e por si.', choices:['15','17','18','19'], ans:1},
+      {q:'Um retângulo tem lados de 5cm e 3cm. Qual é a área?', tip:'💡 Área = base × altura.', choices:['8 cm²','12 cm²','15 cm²','18 cm²'], ans:2},
+      {q:'Quanto é 1000 – 347?', tip:'💡 Subtração com reserva.', choices:['643','653','663','673'], ans:1},
+      /* 5º ano */
+      {q:'Qual é 25% de 200?', tip:'💡 25% = 1/4 do valor.', choices:['25','40','50','75'], ans:2},
+      {q:'Numa sequência: 3, 6, 12, 24… qual vem a seguir?', tip:'💡 Cada número é multiplicado por 2.', choices:['36','42','48','54'], ans:2},
+      {q:'Qual o perímetro de um quadrado com lado 7 cm?', tip:'💡 P = 4 × lado.', choices:['21 cm','24 cm','28 cm','32 cm'], ans:2},
+      {q:'0,5 é igual a qual fração?', tip:'💡 Zero vírgula cinco.', choices:['1/4','1/3','1/2','2/3'], ans:2},
+    ]
+  },
+  {
+    id:'port', icon:'📖', name:'Português',
+    badge:'📖 Português', badgeColor:'#3a86ff',
+    cardGrad:'linear-gradient(135deg,rgba(58,134,255,.35),rgba(2,62,138,.3))',
+    cardAccent:'#3a86ff',
+    fogColor:0x00123a, bgColor:0x00081f,
+    lightColor:0x3a86ff, particleColor:0x48cae4,
+    years:'2º ao 5º ano',
+    questions:[
+      /* 2º ano */
+      {q:'Quantas sílabas tem a palavra BORBOLETA?', tip:'💡 Divida: bor-bo-le-ta.', choices:['2','3','4','5'], ans:2},
+      {q:'Qual palavra é um substantivo?', tip:'💡 Substantivo é nome de coisa, pessoa ou lugar.', choices:['Correr','Bonito','Casa','Rápido'], ans:2},
+      {q:'Complete: "O gato ____ no sofá." (verbo SER no passado)', tip:'💡 O gato estava no sofá.', choices:['está','estava','estará','esteve'], ans:1},
+      {q:'Qual dessas palavras rima com AMOR?', tip:'💡 Rima = mesmos sons no final.', choices:['Flores','Calor','Amigo','Feliz'], ans:1},
+      /* 3º ano */
+      {q:'O que é um parágrafo?', tip:'💡 Parte de um texto com ideia central.', choices:['Uma letra','Uma palavra longa','Conjunto de frases com ideia','Tipo de poema'], ans:2},
+      {q:'Qual pontuação indica uma pergunta?', tip:'💡 Final de interrogação.', choices:['.','!','?',','], ans:2},
+      {q:'Qual é o plural de "mão"?', tip:'💡 Atenção para o plural irregular!', choices:['Mãos','Mães','Mões','Manus'], ans:0},
+      {q:'Na frase "O menino feliz brincava", qual é o adjetivo?', tip:'💡 Adjetivo qualifica o substantivo.', choices:['menino','feliz','brincava','o'], ans:1},
+      /* 4º ano */
+      {q:'O que é um sinônimo?', tip:'💡 Palavras com significado parecido.', choices:['Palavra de sentido oposto','Palavra de sentido similar','Palavra com erro','Palavra estrangeira'], ans:1},
+      {q:'Qual é o antônimo de ALEGRE?', tip:'💡 Antônimo = sentido contrário.', choices:['Contente','Triste','Feliz','Animado'], ans:1},
+      {q:'Qual é a sílaba tônica de "MÚSICA"?', tip:'💡 Donde está o acento?', choices:['si','ca','MÚ','mu'], ans:2},
+      {q:'Um texto que conta uma história inventada é chamado de:', tip:'💡 Pense em contos de fada!', choices:['Notícia','Receita','Narrativa de ficção','Bula'], ans:2},
+      /* 5º ano */
+      {q:'"Estava com o coração nas mãos" é um exemplo de:', tip:'💡 Linguagem figurada!', choices:['Comparação literal','Metáfora','Hipérbole','Onomatopeia'], ans:1},
+      {q:'Qual é a forma correta?', tip:'💡 Atenção ao uso de mal/mau.', choices:['"Ele ficou mal"','Ele ficou mau','Ele ficou male','Ele ficou malo'], ans:0},
+      {q:'O que é a ideia principal de um texto?', tip:'💡 A mensagem mais importante.', choices:['O título','O assunto central','As palavras difíceis','A conclusão'], ans:1},
+      {q:'Qual gênero textual serve para convencer o leitor?', tip:'💡 Tem argumentos e defende uma posição.', choices:['Conto','Poema','Texto argumentativo','Receita'], ans:2},
+    ]
+  },
+  {
+    id:'sci', icon:'🔭', name:'Ciências',
+    badge:'🔭 Ciências', badgeColor:'#06d6a0',
+    cardGrad:'linear-gradient(135deg,rgba(6,214,160,.3),rgba(0,127,95,.3))',
+    cardAccent:'#06d6a0',
+    fogColor:0x001a12, bgColor:0x00100b,
+    lightColor:0x06d6a0, particleColor:0x06d6a0,
+    years:'2º ao 5º ano',
+    questions:[
+      {q:'Qual sentido usamos para ouvir sons?', tip:'💡 É um dos cinco sentidos!', choices:['Visão','Olfato','Audição','Tato'], ans:2},
+      {q:'Os animais que mamam leite da mãe são chamados de:', tip:'💡 Lembram dos cachorros filhotes?', choices:['Répteis','Mamíferos','Anfíbios','Aves'], ans:1},
+      {q:'O que as plantas precisam para fazer a fotossíntese?', tip:'💡 Luz, água e…', choices:['Luz, água e CO₂','Só água','Só sol','Chuva e vento'], ans:0},
+      {q:'Em que estado da matéria está o gelo?', tip:'💡 Brrr, está bem frio!', choices:['Líquido','Gasoso','Sólido','Plasma'], ans:2},
+      {q:'Qual planeta é o mais próximo do Sol?', tip:'💡 É o mais quente!', choices:['Vênus','Marte','Terra','Mercúrio'], ans:3},
+      {q:'Como se chama a transformação de girino em sapo?', tip:'💡 Mudança na fase de vida.', choices:['Migração','Metamorfose','Hibernação','Adaptação'], ans:1},
+      {q:'O que é a cadeia alimentar?', tip:'💡 Quem come quem na natureza.', choices:['Lista de comidas','Relação de quem come quem','Tipos de plantas','Camadas do solo'], ans:1},
+      {q:'Qual órgão bombeia o sangue pelo nosso corpo?', tip:'💡 Bate-bate no peito!', choices:['Pulmão','Fígado','Coração','Rim'], ans:2},
+      {q:'O que são energias renováveis?', tip:'💡 Não acabam na natureza!', choices:['Carvão e petróleo','Solar, eólica e hídrica','Gás natural','Madeira apenas'], ans:1},
+      {q:'Qual camada da Terra vivemos em cima?', tip:'💡 A parte de fora!', choices:['Manto','Núcleo','Crosta terrestre','Astenosfera'], ans:2},
+      {q:'Como se chama o processo pelo qual a água evapora e vira chuva?', tip:'💡 Ciclo da água!', choices:['Ciclo lunar','Ciclo hidrológico','Ciclo solar','Ciclo das marés'], ans:1},
+      {q:'Qual desses NÃO é um mamífero?', tip:'💡 Um deles bota ovos!', choices:['Golfinho','Cobra','Baleia','Morcego'], ans:1},
+      {q:'O que é biodiversidade?', tip:'💡 Bio = vida, diversidade = variedade.', choices:['Tipos de solo','Variedade de seres vivos','Tipos de clima','Quantidade de água'], ans:1},
+      {q:'Qual nutriente dá energia rápida ao nosso corpo?', tip:'💡 Presente no pão e arroz!', choices:['Proteínas','Carboidratos','Vitaminas','Minerais'], ans:1},
+      {q:'O que faz a Lua parecer brilhar no céu?', tip:'💡 A Lua não tem luz própria.', choices:['Ela produz luz','Reflete a luz do Sol','Luz das estrelas','Fogo interno'], ans:1},
+      {q:'Qual é o órgão responsável pela respiração?', tip:'💡 Inspira e expira!', choices:['Coração','Estômago','Pulmões','Rins'], ans:2},
+    ]
+  },
+  {
+    id:'hist', icon:'🏛️', name:'História',
+    badge:'🏛️ História', badgeColor:'#ff9f1c',
+    cardGrad:'linear-gradient(135deg,rgba(255,159,28,.3),rgba(181,69,27,.3))',
+    cardAccent:'#ff9f1c',
+    fogColor:0x1a0900, bgColor:0x0f0500,
+    lightColor:0xff9f1c, particleColor:0xffd60a,
+    years:'2º ao 5º ano',
+    questions:[
+      {q:'Quem eram os primeiros habitantes do Brasil?', tip:'💡 Viviam aqui antes dos europeus.', choices:['Portugueses','Africanos','Índios/povos indígenas','Espanhóis'], ans:2},
+      {q:'Em que data comemoramos a independência do Brasil?', tip:'💡 "Independência ou morte!"', choices:['7 de setembro','15 de novembro','22 de abril','1 de maio'], ans:0},
+      {q:'Como se chama o grito que proclamou a independência do Brasil?', tip:'💡 Às margens do Rio Ipiranga!', choices:['Grito do Povo','Grito do Ipiranga','Grito da Liberdade','Grito Real'], ans:1},
+      {q:'Quem foi Dom Pedro I?', tip:'💡 Ele proclamou a independência.', choices:['Primeiro presidente','Último rei de Portugal','Proclamador da Independência','Explorador espanhol'], ans:2},
+      {q:'Quando foi abolida a escravidão no Brasil?', tip:'💡 Lei Áurea, 1888.', choices:['1822','1850','1888','1900'], ans:2},
+      {q:'Quem assinou a Lei Áurea que aboliu a escravidão?', tip:'💡 Uma princesa famosa!', choices:['Princesa Isabel','Rainha Vitória','Maria Leopoldina','Leopoldina de Áustria'], ans:0},
+      {q:'O Brasil foi colônia de qual país por mais de 300 anos?', tip:'💡 Cabral chegou em 1500.', choices:['Espanha','França','Portugal','Inglaterra'], ans:2},
+      {q:'O que foi a Semana de Arte Moderna de 1922?', tip:'💡 Aconteceu em São Paulo.', choices:['Uma guerra','Movimento cultural e artístico','Uma festa popular','Uma lei nova'], ans:1},
+      {q:'Em que ano foi proclamada a República do Brasil?', tip:'💡 Deodoro da Fonseca!', choices:['1822','1850','1889','1900'], ans:2},
+      {q:'Qual era o trabalho forçado dos africanos escravizados no Brasil colonial?', tip:'💡 Nas lavouras de cana e café.', choices:['Artesanato','Trabalho forçado nas fazendas','Comércio','Navegação'], ans:1},
+      {q:'O que são patrimônios históricos?', tip:'💡 Coisas que guardam nossa história.', choices:['Novas construções','Lugares e bens que guardam a memória','Apenas museus','Documentos secretos'], ans:1},
+      {q:'Qual foi a principal riqueza do Brasil no período colonial?', tip:'💡 Pau-brasil, ouro e cana-de-açúcar!', choices:['Petróleo','Soja','Cana-de-açúcar e ouro','Café apenas'], ans:2},
+      {q:'O que é o folclore?', tip:'💡 Saci, Curupira…', choices:['Tipo de dança','Conjunto de lendas, costumes e tradições populares','Estilo musical','Lei antiga'], ans:1},
+      {q:'Getúlio Vargas ficou conhecido como "Pai dos Pobres" por quê?', tip:'💡 Criou leis trabalhistas.', choices:['Construiu casas','Criou leis de proteção ao trabalhador','Distribuiu comida','Aboliu impostos'], ans:1},
+      {q:'Qual civilização antiga construiu as pirâmides do Egito?', tip:'💡 Viviam às margens do Rio Nilo.', choices:['Gregos','Romanos','Egípcios','Maias'], ans:2},
+      {q:'O que é um mapa histórico?', tip:'💡 Mostra como era o passado.', choices:['Mapa do tesouro','Representação de como os lugares eram no passado','Mapa do futuro','GPS antigo'], ans:1},
+    ]
+  },
+  {
+    id:'geo', icon:'🌎', name:'Geografia',
+    badge:'🌎 Geografia', badgeColor:'#7cb518',
+    cardGrad:'linear-gradient(135deg,rgba(124,181,24,.3),rgba(58,90,64,.3))',
+    cardAccent:'#7cb518',
+    fogColor:0x071a03, bgColor:0x040e02,
+    lightColor:0x7cb518, particleColor:0x52b788,
+    years:'2º ao 5º ano',
+    questions:[
+      {q:'Quantos continentes existem no planeta Terra?', tip:'💡 Conte: América, Europa, Ásia…', choices:['4','5','6','7'], ans:3},
+      {q:'Qual é a capital do Brasil?', tip:'💡 Cidade inaugurada em 1960!', choices:['São Paulo','Rio de Janeiro','Brasília','Salvador'], ans:2},
+      {q:'Qual o maior rio do Brasil?', tip:'💡 Está no Norte do país!', choices:['Rio São Francisco','Rio Paraná','Rio Amazonas','Rio Tocantins'], ans:2},
+      {q:'Em que hemisfério (metade do globo) está o Brasil?', tip:'💡 Abaixo da linha do Equador (maioria).', choices:['Norte','Sul','Leste','Oeste'], ans:1},
+      {q:'Qual é a maior floresta tropical do mundo?', tip:'💡 Fica na América do Sul.', choices:['Floresta do Congo','Floresta Amazônica','Floresta Atlântica','Taiga'], ans:1},
+      {q:'Qual país é nosso maior vizinho na América do Sul?', tip:'💡 Faz fronteira com quase todo o Brasil.', choices:['Argentina','Bolívia','Peru','Argentina e Bolívia têm tamanho similar'], ans:0},
+      {q:'O que são pontos cardeais?', tip:'💡 Norte, Sul, Leste e Oeste.', choices:['Tipos de clima','Direções para se localizar','Tipos de solo','Camadas do oceano'], ans:1},
+      {q:'Qual bioma cobre a maior parte do Centro-Oeste brasileiro?', tip:'💡 Savana tropical!', choices:['Amazônia','Caatinga','Cerrado','Pampa'], ans:2},
+      {q:'Como se chama a linha imaginária que divide o globo em Norte e Sul?', tip:'💡 Passa pelo Brasil!', choices:['Meridiano de Greenwich','Trópico de Capricórnio','Linha do Equador','Paralelo 23'], ans:2},
+      {q:'Qual região do Brasil é a mais seca?', tip:'💡 Famosa pelo sol forte e cactus!', choices:['Sul','Sudeste','Nordeste','Centro-Oeste'], ans:2},
+      {q:'O que é um mapa?', tip:'💡 Representação desenhada.', choices:['Fotografia de satélite','Representação da superfície terrestre em plano','Modelo em 3D do planeta','Livro de viagens'], ans:1},
+      {q:'Qual o maior país do mundo em extensão territorial?', tip:'💡 Fica na Ásia e Europa.', choices:['EUA','China','Brasil','Rússia'], ans:3},
+      {q:'Como se chama o conjunto de características de tempo (chuva, temperatura) de uma região?', tip:'💡 Clima ou…', choices:['Relevo','Clima','Bioma','Solo'], ans:1},
+      {q:'Qual oceano banha a costa leste do Brasil?', tip:'💡 Está a leste da América do Sul.', choices:['Oceano Pacífico','Oceano Índico','Oceano Atlântico','Mar Mediterrâneo'], ans:2},
+      {q:'Quantos estados tem o Brasil?', tip:'💡 Mais o Distrito Federal!', choices:['24','25','26','27'], ans:2},
+      {q:'O que é latitude?', tip:'💡 Medida em graus, norte ou sul.', choices:['Distância leste-oeste','Distância norte-sul em relação ao Equador','Altitude de uma montanha','Velocidade do vento'], ans:1},
+    ]
+  },
+];
+
+// ══════════════════════════════════════════════════
+//  THREE.JS 3D ENGINE
+// ══════════════════════════════════════════════════
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('c3d'),antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=true;
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,.1,1000);
+cam.position.set(0,4,16);
+
+window.addEventListener('resize',()=>{
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  cam.aspect=window.innerWidth/window.innerHeight;
+  cam.updateProjectionMatrix();
+});
+
+const ambLight=new THREE.AmbientLight(0xffffff,.6);
+scene.add(ambLight);
+const dirLight=new THREE.DirectionalLight(0xffffff,1);
+dirLight.position.set(8,18,10);dirLight.castShadow=true;
+scene.add(dirLight);
+const pointLight=new THREE.PointLight(0xffffff,2,60);
+pointLight.position.set(0,10,0);
+scene.add(pointLight);
+const rimLight=new THREE.PointLight(0xffffff,1,40);
+rimLight.position.set(-10,5,-5);
+scene.add(rimLight);
+
+let worldObjs=[],particleSys=null;
+const clock=new THREE.Clock();
+let camT=0;
+
+function clearWorld(){
+  worldObjs.forEach(o=>scene.remove(o));
+  worldObjs=[];
+  if(particleSys){scene.remove(particleSys);particleSys=null;}
+}
+
+/* ── WORLD BUILDERS ── */
+function buildMath(){
+  scene.background=new THREE.Color(0x0d0020);
+  scene.fog=new THREE.FogExp2(0x0d0020,.022);
+  pointLight.color.set(0xf72585);rimLight.color.set(0x7209b7);
+
+  // Platform
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:0x1a0033,roughness:.9}));
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);worldObjs.push(floor);
+
+  // Giant floating numbers and symbols
+  const shapes3D=[
+    {geo:new THREE.TorusGeometry(1.2,.25,8,40),c:0xf72585,x:-8,y:3,z:-5},
+    {geo:new THREE.BoxGeometry(1.5,1.5,1.5),c:0x7209b7,x:8,y:2,z:-6},
+    {geo:new THREE.OctahedronGeometry(1.2),c:0xf72585,x:0,y:5,z:-8},
+    {geo:new THREE.IcosahedronGeometry(1),c:0xb5179e,x:-5,y:4,z:-3},
+    {geo:new THREE.TetrahedronGeometry(1),c:0xff6b6b,x:5,y:3,z:-4},
+  ];
+  shapes3D.forEach((s,i)=>{
+    const m=new THREE.Mesh(s.geo,new THREE.MeshStandardMaterial({color:s.c,emissive:s.c,emissiveIntensity:.3,roughness:.4,metalness:.6}));
+    m.position.set(s.x,s.y,s.z);m.castShadow=true;
+    m.userData.spin=.01*(i%2?1:-1);m.userData.float=i;
+    scene.add(m);worldObjs.push(m);
+  });
+
+  // Number cubes scattered on floor
+  for(let i=0;i<20;i++){
+    const cube=new THREE.Mesh(new THREE.BoxGeometry(.6,.6,.6),
+      new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(.85,.8,.4),metalness:.5,roughness:.3}));
+    cube.position.set((Math.random()-.5)*18,.3,(Math.random()*.5-10));
+    cube.rotation.set(Math.random(),Math.random(),Math.random());
+    cube.castShadow=true;
+    scene.add(cube);worldObjs.push(cube);
+  }
+
+  // Stars/sparkles
+  makeParticles(0xf72585,300);
+  cam.position.set(0,4,14);
+}
+
+function buildPort(){
+  scene.background=new THREE.Color(0x00081f);
+  scene.fog=new THREE.FogExp2(0x00081f,.018);
+  pointLight.color.set(0x3a86ff);rimLight.color.set(0x023e8a);
+
+  // Library ground
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),
+    new THREE.MeshStandardMaterial({color:0x0a1f44,roughness:.8}));
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);worldObjs.push(floor);
+
+  // Open books (geometry)
+  function makeBook(x,z,color,tilt=0){
+    const g=new THREE.Group();
+    const cover=new THREE.Mesh(new THREE.BoxGeometry(1.4,.15,1.8),
+      new THREE.MeshStandardMaterial({color,roughness:.5}));
+    const pageL=new THREE.Mesh(new THREE.BoxGeometry(.65,.08,1.6),
+      new THREE.MeshStandardMaterial({color:0xfffde7}));
+    pageL.position.set(-.35,.12,0);pageL.rotation.y=.25;
+    const pageR=new THREE.Mesh(new THREE.BoxGeometry(.65,.08,1.6),
+      new THREE.MeshStandardMaterial({color:0xfffde7}));
+    pageR.position.set(.35,.12,0);pageR.rotation.y=-.25;
+    g.add(cover,pageL,pageR);
+    g.position.set(x,1.5+Math.random(),z);
+    g.rotation.set(tilt,(Math.random()-.5)*.5,0);
+    g.userData.float=Math.random()*Math.PI*2;
+    g.userData.spin=.005*(Math.random()>.5?1:-1);
+    scene.add(g);worldObjs.push(g);
+  }
+  const bookColors=[0xf72585,0x3a86ff,0x06d6a0,0xff9f1c,0x7cb518,0xb5179e];
+  for(let i=0;i<16;i++) makeBook((Math.random()-.5)*16,(-(Math.random()*10+2)),bookColors[i%bookColors.length],.2);
+
+  // Feather pens (cones)
+  for(let i=0;i<8;i++){
+    const pen=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,2,6),
+      new THREE.MeshStandardMaterial({color:0xffd60a,roughness:.6}));
+    pen.position.set((Math.random()-.5)*12,1.5,(Math.random()*.5-8));
+    pen.rotation.z=(Math.random()-.5)*.8;
+    pen.userData.float=Math.random()*Math.PI*2;
+    scene.add(pen);worldObjs.push(pen);
+  }
+
+  makeParticles(0x48cae4,200);
+  cam.position.set(0,4,13);
+}
+
+function buildSci(){
+  scene.background=new THREE.Color(0x00100b);
+  scene.fog=new THREE.FogExp2(0x00100b,.02);
+  pointLight.color.set(0x06d6a0);rimLight.color.set(0x007f5f);
+
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),
+    new THREE.MeshStandardMaterial({color:0x003320,roughness:.9}));
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);worldObjs.push(floor);
+
+  // DNA helix
+  for(let i=0;i<36;i++){
+    const t=i*.32,r=1.1,y=i*.22-4;
+    const s1=makeSphere(.16,0x06d6a0,Math.cos(t)*r,y,Math.sin(t)*r+2);
+    const s2=makeSphere(.16,0x3a86ff,Math.cos(t+Math.PI)*r,y,Math.sin(t+Math.PI)*r+2);
+    worldObjs.push(s1,s2);
+    if(i%3===0){
+      const bar=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,r*2,4),
+        new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.3}));
+      bar.position.set(0,y,2);bar.rotation.z=Math.PI/2;
+      scene.add(bar);worldObjs.push(bar);
+    }
+  }
+
+  // Floating atoms
+  for(let i=0;i<5;i++){
+    const g=new THREE.Group();
+    const nucleus=new THREE.Mesh(new THREE.SphereGeometry(.45,16,16),
+      new THREE.MeshStandardMaterial({color:0xffd60a,emissive:0xffaa00,emissiveIntensity:.7}));
+    g.add(nucleus);
+    for(let j=0;j<3;j++){
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.85,.04,8,36),
+        new THREE.MeshStandardMaterial({color:0x06d6a0,transparent:true,opacity:.5}));
+      ring.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);
+      g.add(ring);
+      const el=new THREE.Mesh(new THREE.SphereGeometry(.1,8,8),
+        new THREE.MeshStandardMaterial({color:0x48cae4,emissive:0x48cae4,emissiveIntensity:.8}));
+      el.userData={elRing:j,elAngle:Math.random()*Math.PI*2,parent:g};
+      g.add(el);
+    }
+    g.position.set((Math.random()-.5)*14,2+Math.random()*3,(Math.random()-.5)*5-3);
+    g.userData.floatT=Math.random()*Math.PI*2;
+    scene.add(g);worldObjs.push(g);
+  }
+
+  // Plants / leaves
+  for(let i=0;i<12;i++){
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(.5+Math.random()*.3,8,8),
+      new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(.35,.7,.3),roughness:.8}));
+    leaf.position.set((Math.random()-.5)*20,.5,(Math.random()*.5-10));
+    leaf.scale.set(1,.4,1.5);
+    scene.add(leaf);worldObjs.push(leaf);
+  }
+
+  makeParticles(0x06d6a0,250);
+  cam.position.set(0,5,16);
+}
+
+function buildHist(){
+  scene.background=new THREE.Color(0x0f0500);
+  scene.fog=new THREE.FogExp2(0x0f0500,.018);
+  pointLight.color.set(0xff9f1c);rimLight.color.set(0xb5451b);
+
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),
+    new THREE.MeshStandardMaterial({color:0xc8a84b,roughness:1}));
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);worldObjs.push(floor);
+
+  // Pyramids
+  [[0,0,3],[−5,0,2],[5,0,1.5],[−9,0,1.2],[9,0,1]].forEach(([x,_,s])=>{
+    const p=new THREE.Mesh(new THREE.ConeGeometry(s,s*1.3,4),
+      new THREE.MeshStandardMaterial({color:0xc8a84b,roughness:.8}));
+    p.position.set(x,s*.65,-8);p.rotation.y=Math.PI/4;p.castShadow=true;
+    scene.add(p);worldObjs.push(p);
+  });
+
+  // Temple columns
+  for(let i=0;i<10;i++){
+    const col=new THREE.Mesh(new THREE.CylinderGeometry(.28,.35,4.5,8),
+      new THREE.MeshStandardMaterial({color:0xe8d5b0,roughness:.7}));
+    col.position.set(-10+(i%5)*3.5,2.25,i<5?-2:-5);
+    col.castShadow=true;
+    scene.add(col);worldObjs.push(col);
+  }
+
+  // Scrolls (cylinders)
+  for(let i=0;i<8;i++){
+    const scroll=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.8,12),
+      new THREE.MeshStandardMaterial({color:0xd4a373,roughness:.6}));
+    scroll.position.set((Math.random()-.5)*16,.5,(Math.random()*.5-5));
+    scroll.rotation.z=Math.PI/2+(.5-Math.random())*.5;
+    scroll.userData.floatT=Math.random()*Math.PI*2;
+    scene.add(scroll);worldObjs.push(scroll);
+  }
+
+  // Braziers (torches)
+  for(let i=0;i<6;i++){
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(.15,.2,1.5,6),
+      new THREE.MeshStandardMaterial({color:0x888}));
+    const fire=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),
+      new THREE.MeshStandardMaterial({color:0xff6b35,emissive:0xff3300,emissiveIntensity:1}));
+    base.position.set(-7+(i*2.8),0.75,-1);
+    fire.position.copy(base.position);fire.position.y=1.7;
+    fire.userData.floatT=Math.random()*Math.PI*2;
+    scene.add(base,fire);worldObjs.push(base,fire);
+  }
+
+  makeParticles(0xff9f1c,150);
+  cam.position.set(0,5,16);
+}
+
+function buildGeo(){
+  scene.background=new THREE.Color(0x040e02);
+  scene.fog=new THREE.FogExp2(0x040e02,.016);
+  pointLight.color.set(0x7cb518);rimLight.color.set(0x3a5a40);
+
+  // Grass floor
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(60,60),
+    new THREE.MeshStandardMaterial({color:0x2d6a4f,roughness:.9}));
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);worldObjs.push(floor);
+
+  // Giant globe (Earth colors)
+  const globe=new THREE.Mesh(new THREE.SphereGeometry(3.5,32,32),
+    new THREE.MeshStandardMaterial({color:0x2d6a4f,roughness:.6,metalness:.1}));
+  globe.position.set(0,4,-6);
+  globe.userData.globe=true;
+  scene.add(globe);worldObjs.push(globe);
+
+  // Continents suggestion (blobs on globe)
+  const cColors=[0x52b788,0x74c69d,0x40916c];
+  for(let i=0;i<18;i++){
+    const theta=Math.random()*Math.PI*2,phi=Math.random()*Math.PI;
+    const r=3.55;
+    const blob=new THREE.Mesh(new THREE.SphereGeometry(.35+Math.random()*.4,8,8),
+      new THREE.MeshStandardMaterial({color:cColors[i%3],roughness:.5}));
+    blob.position.set(
+      r*Math.sin(phi)*Math.cos(theta),
+      4+r*Math.cos(phi),
+      -6+r*Math.sin(phi)*Math.sin(theta)
+    );
+    blob.userData.globeChild=true;blob.userData.angle=theta;blob.userData.phi=phi;
+    scene.add(blob);worldObjs.push(blob);
+  }
+
+  // Oceans (blue ring around globe)
+  const ocean=new THREE.Mesh(new THREE.SphereGeometry(3.52,32,32),
+    new THREE.MeshStandardMaterial({color:0x0077b6,transparent:true,opacity:.35,roughness:.1,metalness:.2}));
+  ocean.position.set(0,4,-6);
+  ocean.userData.globe=true;
+  scene.add(ocean);worldObjs.push(ocean);
+
+  // Mountains
+  [[−12,0,−5],[12,0,−4],[−6,0,−3],[6,0,−3],[−15,0,−8],[15,0,−7]].forEach(([x,_,z])=>{
+    const h=1.5+Math.random()*2;
+    const mt=new THREE.Mesh(new THREE.ConeGeometry(h*.8,h*1.4,5),
+      new THREE.MeshStandardMaterial({color:0x6b705c,roughness:.9}));
+    mt.position.set(x,h*.7,z);mt.castShadow=true;
+    const snow=new THREE.Mesh(new THREE.ConeGeometry(h*.3,h*.4,5),
+      new THREE.MeshStandardMaterial({color:0xeee}));
+    snow.position.set(x,h*1.25,z);
+    scene.add(mt,snow);worldObjs.push(mt,snow);
+  });
+
+  // Trees
+  for(let i=0;i<20;i++){
+    const h=1.2+Math.random()*.8;
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,h,5),
+      new THREE.MeshStandardMaterial({color:0x6d4c22}));
+    trunk.position.set((Math.random()-.5)*24,.5+h/2,-(Math.random()*5+4));
+    const leaves=new THREE.Mesh(new THREE.SphereGeometry(h*.7,8,8),
+      new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(.33,.6,.3)}));
+    leaves.position.copy(trunk.position);leaves.position.y=h*.8+h*.6;
+    scene.add(trunk,leaves);worldObjs.push(trunk,leaves);
+  }
+
+  makeParticles(0x52b788,200);
+  cam.position.set(0,5,18);
+}
+
+function makeSphere(r,c,x,y,z){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(r,12,12),
+    new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:.4}));
+  m.position.set(x,y,z);scene.add(m);return m;
+}
+
+function makeParticles(color,count){
+  const geo=new THREE.BufferGeometry();
+  const pos=[],vel=[];
+  for(let i=0;i<count;i++){
+    pos.push((Math.random()-.5)*24,(Math.random()-.5)*12,(Math.random()-.5)*20);
+    vel.push((Math.random()-.5)*.018,Math.random()*.03+.008,(Math.random()-.5)*.018);
+  }
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geo.userData.vel=vel;
+  particleSys=new THREE.Points(geo,new THREE.PointsMaterial({color,size:.13,transparent:true,opacity:.75}));
+  scene.add(particleSys);
+}
+
+const worldBuilders={math:buildMath,port:buildPort,sci:buildSci,hist:buildHist,geo:buildGeo};
+
+/* ── ANIMATION LOOP ── */
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+
+  camT+=.0015;
+  cam.position.x=Math.sin(camT)*1.5;
+  cam.position.y=4+Math.sin(camT*.7)*.4;
+  cam.lookAt(0,2,0);
+
+  worldObjs.forEach((obj,idx)=>{
+    if(obj.userData.spin) obj.rotation.y+=obj.userData.spin;
+    if(obj.userData.float!==undefined){
+      obj.position.y+=Math.sin(t+obj.userData.float)*.003;
+      if(typeof obj.userData.float==='number') obj.rotation.y+=.003;
+    }
+    if(obj.userData.globe) obj.rotation.y+=.004;
+    if(obj.userData.floatT!==undefined){
+      obj.position.y+=Math.sin(t*1.5+obj.userData.floatT)*.005;
+    }
+    if(obj.userData.globeChild){
+      // orbit with globe
+      const g=worldObjs.find(o=>o.userData.globe&&o.type==='Mesh'&&!o.userData.globeChild);
+      if(g){
+        const r=3.55;
+        const ang=obj.userData.angle+t*.004;
+        const phi=obj.userData.phi;
+        obj.position.set(
+          g.position.x+r*Math.sin(phi)*Math.cos(ang),
+          g.position.y+r*Math.cos(phi),
+          g.position.z+r*Math.sin(phi)*Math.sin(ang)
+        );
+      }
+    }
+  });
+
+  if(particleSys){
+    const pos=particleSys.geometry.attributes.position;
+    const vel=particleSys.geometry.userData.vel;
+    for(let i=0;i<pos.count;i++){
+      let y=pos.getY(i)+vel[i*3+1];
+      if(y>7)y=-5;
+      pos.setX(i,pos.getX(i)+vel[i*3]);
+      pos.setY(i,y);
+      pos.setZ(i,pos.getZ(i)+vel[i*3+2]);
+    }
+    pos.needsUpdate=true;
+  }
+
+  pointLight.intensity=1.8+Math.sin(t*1.8)*.4;
+  renderer.render(scene,cam);
+}
+animate();
+
+// ══════════════════════════════════════════════════
+//  FX CANVAS (2D overlay particles menu)
+// ══════════════════════════════════════════════════
+const fxCanvas=document.getElementById('fx-canvas');
+fxCanvas.width=window.innerWidth;fxCanvas.height=window.innerHeight;
+const fxCtx=fxCanvas.getContext('2d');
+window.addEventListener('resize',()=>{fxCanvas.width=window.innerWidth;fxCanvas.height=window.innerHeight;});
+const menuParticles=[];
+for(let i=0;i<60;i++) menuParticles.push({
+  x:Math.random()*fxCanvas.width,y:Math.random()*fxCanvas.height,
+  r:Math.random()*3+1,vx:(Math.random()-.5)*.4,vy:-(Math.random()*.6+.2),
+  color:['#ffd60a','#f72585','#3a86ff','#06d6a0','#ff9f1c','#7cb518'][Math.floor(Math.random()*6)],
+  alpha:Math.random()*.6+.2
+});
+let menuVisible=true;
+function animFX(){
+  requestAnimationFrame(animFX);
+  fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  if(!menuVisible)return;
+  menuParticles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.y<-10){p.y=fxCanvas.height+10;p.x=Math.random()*fxCanvas.width;}
+    fxCtx.beginPath();
+    fxCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    fxCtx.fillStyle=p.color;fxCtx.globalAlpha=p.alpha;
+    fxCtx.fill();fxCtx.globalAlpha=1;
+  });
+}
+animFX();
+
+// ══════════════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════════════
+const confCanvas=document.getElementById('conf-canvas');
+confCanvas.width=window.innerWidth;confCanvas.height=window.innerHeight;
+const confCtx=confCanvas.getContext('2d');
+window.addEventListener('resize',()=>{confCanvas.width=window.innerWidth;confCanvas.height=window.innerHeight;});
+let confParts=[];
+function launchConfetti(big=false){
+  const n=big?220:70;
+  const cols=['#ffd60a','#f72585','#3a86ff','#06d6a0','#ff9f1c','#7cb518','#c77dff','#ff6b6b'];
+  for(let i=0;i<n;i++) confParts.push({
+    x:Math.random()*confCanvas.width,y:-10,
+    vx:(Math.random()-.5)*5,vy:Math.random()*5+2,
+    color:cols[Math.floor(Math.random()*cols.length)],
+    w:Math.random()*10+5,h:Math.random()*5+3,
+    rot:Math.random()*Math.PI*2,vr:(Math.random()-.5)*.25
+  });
+}
+function animConf(){
+  requestAnimationFrame(animConf);
+  confCtx.clearRect(0,0,confCanvas.width,confCanvas.height);
+  confParts=confParts.filter(p=>p.y<confCanvas.height+20);
+  confParts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=.06;
+    confCtx.save();confCtx.translate(p.x,p.y);confCtx.rotate(p.rot);
+    confCtx.fillStyle=p.color;confCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    confCtx.restore();
+  });
+}
+animConf();
+
+// ══════════════════════════════════════════════════
+//  GAME STATE & LOGIC
+// ══════════════════════════════════════════════════
+let currentSubj=null,qs=[],qIdx=0,score=0,answered=false;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+function startSubject(subj){
+  currentSubj=subj;
+  clearWorld();
+  worldBuilders[subj.id]();
+  qs=shuffle(subj.questions).slice(0,10);
+  qIdx=0;score=0;answered=false;
+  menuVisible=false;
+  document.getElementById('subj-label').textContent=`${subj.icon} ${subj.name}`;
+  document.getElementById('q-badge').textContent=subj.badge;
+  document.getElementById('q-badge').style.background=subj.badgeColor;
+  updateScore();updateProgress();
+  showScreen('game-screen');
+  document.getElementById('quiz-panel').classList.remove('hidden');
+  loadQ();
+}
+
+function updateScore(){document.getElementById('score-display').textContent=`⭐ ${score} pts`;}
+function updateProgress(){
+  const pct=Math.round(qIdx/qs.length*100);
+  document.getElementById('progress-bar-fill').style.width=pct+'%';
+  document.getElementById('q-counter').textContent=`${qIdx+1}/${qs.length}`;
+}
+
+function loadQ(){
+  if(qIdx>=qs.length){showResult();return;}
+  const q=qs[qIdx];
+  answered=false;
+  document.getElementById('question-text').textContent=q.q;
+  document.getElementById('q-tip').textContent=q.tip||'';
+  document.getElementById('feedback-icon').textContent='';
+  document.getElementById('feedback-text').textContent='';
+  document.getElementById('feedback-text').className='';
+  document.getElementById('btn-next').classList.add('hidden');
+  updateProgress();
+
+  const cDiv=document.getElementById('choices');cDiv.innerHTML='';
+  q.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';btn.textContent=c;
+    btn.addEventListener('click',()=>answer(i,btn,q));
+    cDiv.appendChild(btn);
+  });
+}
+
+function answer(idx,btn,q){
+  if(answered)return;
+  answered=true;
+  document.querySelectorAll('.choice-btn').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.ans)b.classList.add('correct');
+  });
+  const fi=document.getElementById('feedback-icon');
+  const ft=document.getElementById('feedback-text');
+  if(idx===q.ans){
+    score+=10;updateScore();
+    btn.classList.add('correct');
+    fi.textContent='🎉';
+    ft.textContent='Muito bem! Resposta correta!';ft.className='fb-ok';
+    launchConfetti();
+  } else {
+    btn.classList.add('wrong');
+    fi.textContent='❌';
+    ft.textContent='Ops! A resposta correta está em verde.';ft.className='fb-err';
+  }
+  document.getElementById('btn-next').classList.remove('hidden');
+}
+
+document.getElementById('btn-next').addEventListener('click',()=>{qIdx++;loadQ();});
+
+document.getElementById('btn-home').addEventListener('click',()=>{
+  clearWorld();menuVisible=true;showScreen('menu-screen');
+  document.getElementById('quiz-panel').classList.add('hidden');
+});
+
+function showResult(){
+  document.getElementById('quiz-panel').classList.add('hidden');
+  const max=qs.length*10,pct=Math.round(score/max*100);
+  let trophy='🏆',title='Incrível!',stars='⭐⭐⭐⭐⭐',msg='Você é um(a) supercampeão(ã)! Resultado perfeito!';
+  if(pct<40){trophy='😊';title='Continue tentando!';stars='⭐';msg='Revise o conteúdo e jogue de novo. Você vai melhorar!';}
+  else if(pct<60){trophy='👍';title='Bom trabalho!';stars='⭐⭐';msg='Você está no caminho certo! Continue estudando.';}
+  else if(pct<80){trophy='🌟';title='Muito bem!';stars='⭐⭐⭐';msg='Ótimo desempenho! Quase perfeito!';}
+  else if(pct<100){trophy='🏅';title='Excelente!';stars='⭐⭐⭐⭐';msg='Você mandou muito bem! Só errou um pouquinho.';}
+
+  document.getElementById('trophy-emoji').textContent=trophy;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-stars').textContent=stars;
+  document.getElementById('result-score').textContent=`${score} de ${max} pontos (${pct}%)`;
+  document.getElementById('result-msg').textContent=msg;
+  if(pct>=80)launchConfetti(true);
+  showScreen('result-screen');
+}
+
+document.getElementById('btn-replay').addEventListener('click',()=>{if(currentSubj)startSubject(currentSubj);});
+document.getElementById('btn-menu').addEventListener('click',()=>{clearWorld();menuVisible=true;showScreen('menu-screen');});
+
+// ── BUILD SUBJECT CARDS ──
+const grid=document.getElementById('subjects-grid');
+SUBJECTS.forEach(s=>{
+  const card=document.createElement('div');
+  card.className='subj-card';
+  card.style.setProperty('--card-grad',s.cardGrad);
+  card.style.setProperty('--card-accent',s.cardAccent);
+  card.innerHTML=`
+    <div class="c-icon">${s.icon}</div>
+    <div class="c-name">${s.name}</div>
+    <div class="c-year">${s.years}</div>`;
+  card.addEventListener('click',()=>startSubject(s));
+  grid.appendChild(card);
+});
+
+// ── HIDE LOADING ──
+setTimeout(()=>{
+  const l=document.getElementById('loading');
+  l.style.opacity='0';
+  setTimeout(()=>l.remove(),700);
+},1800);
+</script>
+</body>
+</html>
